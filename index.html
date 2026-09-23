@@ -219,7 +219,8 @@
         #app { height: 100dvh; max-height: 100dvh; }
         #question-prompt { overflow: hidden; }
         #question-prompt mjx-container { font-size: 0.95em !important; max-width: 100%; }
-        #math-expression-box mjx-container { margin: 0 !important; max-width: 100%; }
+        #math-expression-box { overflow:hidden !important; position:relative; }
+        #math-expression-box mjx-container { margin:0 !important; max-width:none !important; display:inline-block !important; transform-origin:center center; }
         #mole-grid { grid-template-rows: repeat(2, minmax(0, 1fr)); min-height: 0; }
         #mole-grid .hole-wrapper { min-height: 0; }
 
@@ -880,32 +881,47 @@
                     }
                     traps=[-ans, Math.abs(a)-b-c, a+b-c, a-b-c];
                 } else {
-                    // 含絕對值的整數四則：加入「絕對值外仍有運算」的課本型態；負數因數一律加括號。
+                    // 含絕對值的整數四則：絕對值只包住「部分算式」，不再把整個四則算式全部包在絕對值內。
+                    // 所有除法都反向生成，確保答案與誘答選項皆為整數。
                     const mode=this.r(1,4);
                     if(mode===1){
-                        // 例：(-8)×6 + |(-5)×10 - 1|
+                        // 課本型：(-8)×6 + |(-5)×10 - 1|
                         a=-this.r(2,9); b=this.r(2,8); c=-this.r(2,9); d=this.r(2,10); q=this.r(1,6);
                         const inner=c*d-q; ans=a*b+Math.abs(inner);
                         expr=`${this.fmt(a)}\\times${b}+\\left|${this.fmt(c)}\\times${d}-${q}\\right|`;
-                        traps=[a*b+inner, -(a*b)+Math.abs(inner), a*b-Math.abs(inner), Math.abs(a*b+inner)];
-                        steps=[`先算乘法：$${this.fmt(a)}\times${b}=${a*b}$，$${this.fmt(c)}\times${d}=${c*d}$。`,`再算絕對值內：$${c*d}-${q}=${inner}$，所以 $|${inner}|=${Math.abs(inner)}$。`,`最後：$${a*b}+${Math.abs(inner)}=${ans}$。`];
+                        traps=[a*b+inner, -(a*b)+Math.abs(inner), a*b-Math.abs(inner), Math.abs(a*b)+Math.abs(inner)];
+                        steps=[`先算乘法：$${this.fmt(a)}\\times${b}=${a*b}$，$${this.fmt(c)}\\times${d}=${c*d}$。`,`再算絕對值內：$${c*d}-${q}=${inner}$，所以 $|${inner}|=${Math.abs(inner)}$。`,`最後：$${a*b}+${Math.abs(inner)}=${ans}$。`];
                     } else if(mode===2){
-                        b=-this.r(2,9); c=this.r(2,5); d=this.r(1,8); const inner2=b*c-d;
-                        q=this.r(2,6); a=inner2*q; const inner=a/inner2; ans=Math.abs(inner);
-                        expr=`\\left|${this.fmt(a)}\\div[${this.fmt(b)}\\times${c}-${d}]\\right|`;
-                        traps=[inner, -inner, Math.abs(a)/(Math.abs(b)*c-d), Math.abs(a)/Math.abs(b)*c-d];
-                        steps=[`先算絕對值內的中括號：$${this.fmt(b)}\times${c}-${d}=${b*c}-${d}=${inner2}$。`,`再算絕對值內：$${this.fmt(a)}\div${this.fmt(inner2)}=${inner}$。`,`最後取絕對值：$|${inner}|=${ans}$。`];
+                        // 課本型：|8×(-2)-5| ÷ 7 × (-3)，刻意生成可整除的題目
+                        b=this.r(2,9); c=-this.r(2,6); d=this.r(1,8); q=this.r(2,7);
+                        let inner=b*c-d;
+                        // 讓 |inner| 可被 q 整除
+                        d = Math.abs(b*c) % q; if(d===0) d=q;
+                        inner=b*c-d;
+                        while(Math.abs(inner)%q!==0){ d++; inner=b*c-d; }
+                        a=-this.r(2,5);
+                        ans=(Math.abs(inner)/q)*a;
+                        expr=`\\left|${b}\\times${this.fmt(c)}-${d}\\right|\\div${q}\\times${this.fmt(a)}`;
+                        traps=[(inner/q)*a, (Math.abs(inner)/q)*Math.abs(a), Math.abs(inner/q*a), (Math.abs(inner)/q)-a];
+                        steps=[`先算絕對值內的乘法：$${b}\\times${this.fmt(c)}=${b*c}$。`,`再算絕對值內：$${b*c}-${d}=${inner}$，所以 $|${inner}|=${Math.abs(inner)}$。`,`乘除同一層級由左到右：$${Math.abs(inner)}\\div${q}=${Math.abs(inner)/q}$，再算 $${Math.abs(inner)/q}\\times${this.fmt(a)}=${ans}$。`];
                     } else if(mode===3){
-                        a=-this.r(5,20); b=this.r(2,9); c=-this.r(2,9); const inner=a+b*c; ans=Math.abs(inner);
-                        expr=`\\left|${a}+${b}\\times${this.fmt(c)}\\right|`;
-                        traps=[inner, Math.abs(a)+b*c, a+Math.abs(b*c), Math.abs(a)+Math.abs(b*c)];
-                        steps=[`絕對值內先乘除、後加減。`,`先算 $${b}\times${this.fmt(c)}=${b*c}$。`,`絕對值內為 $${a}+${this.fmt(b*c)}=${inner}$。`,`最後 $|${inner}|=${ans}$。`];
+                        // 型態：a×b + |c×d-e|，絕對值外保留乘法與加法
+                        a=-this.r(2,7); b=this.r(2,9); c=-this.r(2,8); d=this.r(2,9); q=this.r(1,9);
+                        const inner=c*d-q; ans=a*b+Math.abs(inner);
+                        expr=`${this.fmt(a)}\\times${b}+\\left|${this.fmt(c)}\\times${d}-${q}\\right|`;
+                        traps=[a*b+inner, Math.abs(a*b)+Math.abs(inner), a*b-Math.abs(inner), -(a*b+Math.abs(inner))];
+                        steps=[`先完成絕對值內外的乘法：$${this.fmt(a)}\\times${b}=${a*b}$，$${this.fmt(c)}\\times${d}=${c*d}$。`,`絕對值內為 $${c*d}-${q}=${inner}$，所以 $|${inner}|=${Math.abs(inner)}$。`,`最後計算 $${a*b}+${Math.abs(inner)}=${ans}$。`];
                     } else {
-                        a=-this.r(8,20); b=this.r(2,7); c=this.r(2,6); const inner=a-b-c; ans=Math.abs(inner);
-                        expr=`\\left|${a}-${b}-${c}\\right|`;
-                        traps=[inner, Math.abs(a)-b-c, Math.abs(a-b)-c, Math.abs(a)-Math.abs(b-c)];
-                        steps=[`絕對值內有兩個減法，依序由左到右計算。`,`$${a}-${b}=${a-b}$。`,`$${a-b}-${c}=${inner}$，最後取絕對值：$|${inner}|=${ans}$。`];
+                        // 型態：|a+b×(-c)| ÷ d；絕對值只包部分，並保證整除
+                        b=this.r(2,7); c=-this.r(2,7); d=this.r(2,6);
+                        const target=d*this.r(2,8);
+                        a=-(target + b*c);
+                        const inner=a+b*c; ans=Math.abs(inner)/d;
+                        expr=`\\left|${a}+${b}\\times${this.fmt(c)}\\right|\\div${d}`;
+                        traps=[inner/d, Math.abs(a)+b*c, Math.abs(a+b)*Math.abs(c)/d, Math.abs(inner)];
+                        steps=[`先算絕對值內的乘法：$${b}\\times${this.fmt(c)}=${b*c}$。`,`再算絕對值內：$${a}+${this.fmt(b*c)}=${inner}$，所以 $|${inner}|=${Math.abs(inner)}$。`,`最後 $${Math.abs(inner)}\\div${d}=${ans}$。`];
                     }
+
                 }
                 return this.make(expr,ans,steps,traps);
             }
@@ -1225,10 +1241,36 @@
                 document.getElementById('question-prompt').innerHTML = this.currentProblem.promptText;
 
                 const svg = document.getElementById('math-svg');
-                svg.innerHTML = `<foreignObject x="10" y="55" width="380" height="190"><div xmlns="http://www.w3.org/1999/xhtml" id="math-expression-box" style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#7c2d12;background:#fff7ed;border:4px solid #f59e0b;border-radius:20px;padding:10px;overflow:hidden;">\\(${this.currentProblem.svgData.expression}\\)</div></foreignObject>`;
+                const exprLen = this.currentProblem.svgData.expression.replace(/\\[a-zA-Z]+/g,'').length;
+                const exprSize = exprLen > 34 ? 22 : (exprLen > 26 ? 25 : 30);
+                svg.innerHTML = `<foreignObject x="4" y="28" width="392" height="244"><div xmlns="http://www.w3.org/1999/xhtml" id="math-expression-box" style="box-sizing:border-box;width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:${exprSize}px;font-weight:900;color:#7c2d12;background:#fff7ed;border:4px solid #f59e0b;border-radius:20px;padding:12px 8px;overflow:visible;white-space:normal;line-height:1.25;">\\(${this.currentProblem.svgData.expression}\\)</div></foreignObject>`;
+
+                const fitMathExpression = () => {
+                    const box = document.getElementById('math-expression-box');
+                    if (!box) return;
+                    const mjx = box.querySelector('mjx-container');
+                    if (!mjx) return;
+
+                    // Reset before measuring. Long formulas are scaled as ONE complete line
+                    // so the right side (especially absolute-value expressions) is never clipped.
+                    mjx.style.transform = 'none';
+                    mjx.style.whiteSpace = 'nowrap';
+                    const availableW = Math.max(1, box.clientWidth - 20);
+                    const availableH = Math.max(1, box.clientHeight - 20);
+                    const rect = mjx.getBoundingClientRect();
+                    const naturalW = Math.max(mjx.scrollWidth || 0, rect.width || 0, 1);
+                    const naturalH = Math.max(mjx.scrollHeight || 0, rect.height || 0, 1);
+                    const scale = Math.min(1, availableW / naturalW, availableH / naturalH);
+                    mjx.style.transform = `scale(${scale})`;
+                };
 
                 if (window.MathJax) {
-                    MathJax.typesetPromise();
+                    MathJax.typesetPromise([document.getElementById('question-prompt'), svg]).then(() => {
+                        requestAnimationFrame(() => {
+                            fitMathExpression();
+                            setTimeout(fitMathExpression, 60);
+                        });
+                    });
                 }
 
                 setTimeout(() => {
