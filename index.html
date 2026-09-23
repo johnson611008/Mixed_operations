@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>整數四則運算 - 數學打地鼠</title>
+    <!-- Tailwind CSS for responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax for rendering LaTeX math formulas -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Font Awesome for UI icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 45%, #7EC850 45%, #4CAF50 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .font-cute {
+            font-family: 'Mochiy Pop One', 'Noto Sans TC', cursive;
+        }
+
+        .font-num {
+            font-family: 'Chakra Petch', sans-serif;
+        }
+
+        /* Wood panel styling */
+        .wood-panel {
+            background: linear-gradient(135deg, #a66a38 0%, #6d4019 100%);
+            border: 4px solid #4a290a;
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.3), 0 8px 15px rgba(0,0,0,0.3);
+            border-radius: 16px;
+        }
+
+        .wood-sign {
+            background: linear-gradient(180deg, #e6be75 0%, #be8738 100%);
+            border: 2px solid #6b4311;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.25);
+        }
+
+        /* Mole hole container with precise clipping */
+        .hole-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            overflow: hidden; /* Ensures mole never leaks out of hole */
+            padding-bottom: 4px;
+        }
+
+        /* Hole Dark Inner Oval */
+        .mole-hole-bg {
+            background: radial-gradient(ellipse at center, #1f1005 0%, #3d200b 70%, #2e7d32 72%, #1b5e20 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 8px 12px rgba(0,0,0,0.85);
+        }
+
+        /* Mole Sliding Animation */
+        .mole-container {
+            transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+            transform: translateY(115%); /* Fully hidden underground */
+            will-change: transform;
+        }
+
+        .mole-container.up {
+            transform: translateY(5%); /* Pop up neatly inside hole */
+        }
+
+        .mole-container.hit {
+            animation: moleHit 0.35s ease-out forwards;
+        }
+
+        .mole-container.shake {
+            animation: moleShake 0.35s ease-in-out;
+        }
+
+        @keyframes moleHit {
+            0% { transform: translateY(5%) scale(1); }
+            30% { transform: translateY(20%) scale(1.15, 0.75); }
+            100% { transform: translateY(115%) scale(0.8, 1.2); }
+        }
+
+        @keyframes moleShake {
+            0%, 100% { transform: translateY(5%) rotate(0deg); }
+            20% { transform: translateY(5%) rotate(-10deg); }
+            40% { transform: translateY(5%) rotate(10deg); }
+            60% { transform: translateY(5%) rotate(-6deg); }
+            80% { transform: translateY(5%) rotate(6deg); }
+        }
+
+        /* Mallet hammer styling */
+        #mallet {
+            pointer-events: none;
+            transition: transform 0.05s ease-out;
+            z-index: 100;
+            transform-origin: 80% 80%;
+        }
+
+        #mallet.swing {
+            animation: malletSwing 0.22s ease-in-out;
+        }
+
+        @keyframes malletSwing {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-45deg) translateY(-15px); }
+            100% { transform: rotate(20deg) translateY(10px); }
+        }
+
+        /* Particle Canvas overlay */
+        #particle-canvas {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 90;
+        }
+
+        /* Hit FX Text Animation */
+        .floating-text {
+            position: absolute;
+            font-family: 'Mochiy Pop One', cursive;
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #ffeb3b;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+            animation: floatUpFade 0.8s ease-out forwards;
+            z-index: 80;
+        }
+
+        @keyframes floatUpFade {
+            0% { opacity: 0; transform: translateY(0) scale(0.5); }
+            30% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-55px) scale(1); }
+        }
+
+        /* Dynamic SVG Geometry styling */
+        .geo-line {
+            stroke: #1e293b;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .geo-parallel {
+            stroke: #d97706;
+            stroke-width: 4;
+            stroke-linecap: round;
+        }
+
+        .geo-label {
+            font-family: 'Chakra Petch', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            fill: #0f172a;
+        }
+
+        .geo-target {
+            font-family: 'Chakra Petch', sans-serif;
+            font-weight: 900;
+            font-size: 21px;
+            fill: #dc2626;
+        }
+
+        .geo-arc {
+            stroke: #0284c7;
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 4,3;
+        }
+
+        /* Modal backdrop */
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #a66a38;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen md:h-screen md:overflow-hidden select-none">
+    <!-- Particle Canvas Overlay -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Floating Mallet Graphic (Appears only during whack swing) -->
+    <div id="mallet" class="fixed top-0 left-0 w-20 h-20 md:w-24 md:h-24 hidden pointer-events-none">
+        <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
+            <rect x="42" y="35" width="16" height="60" rx="5" fill="#8B4513" stroke="#3e1f08" stroke-width="3"/>
+            <rect x="44" y="40" width="12" height="50" rx="3" fill="#A0522D"/>
+            <rect x="10" y="10" width="80" height="32" rx="8" fill="#d97706" stroke="#78350f" stroke-width="3"/>
+            <rect x="15" y="14" width="70" height="12" rx="4" fill="#fbbf24" opacity="0.6"/>
+            <rect x="25" y="10" width="8" height="32" fill="#94a3b8"/>
+            <rect x="67" y="10" width="8" height="32" fill="#94a3b8"/>
+        </svg>
+    </div>
+
+    <!-- MAIN APP LAYOUT CONTAINER -->
+    <div id="app" class="flex flex-col h-full max-w-7xl mx-auto w-full p-2 md:p-3 justify-between">
+        
+        <!-- HEADER / STATS BAR -->
+        <header class="wood-panel p-2 md:p-3 text-white flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
+            <!-- Left: Difficulty & Progress -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-yellow-500 text-amber-950 font-cute text-xs md:text-sm px-3 py-1 rounded-full shadow border border-yellow-300 flex items-center gap-1">
+                    <i class="fa-solid font-bold fa-bug"></i>
+                    <span id="diff-badge">中等難度</span>
+                </div>
+                <div class="text-xs md:text-sm font-bold text-amber-100">
+                    第 <span id="q-curr" class="text-yellow-300 font-num text-base md:text-xl">1</span> / <span id="q-total" class="font-num">10</span> 題
+                </div>
+            </div>
+
+            <!-- Center: Lives, Score, Combo, Timer -->
+            <div class="flex items-center space-x-3 md:space-x-6">
+                <!-- Hearts -->
+                <div class="flex items-center space-x-1" id="hearts-container">
+                    <i class="fa-solid fa-heart text-red-500 text-lg md:text-2xl drop-shadow"></i>
+                    <i class="fa-solid fa-heart text-red-500 text-lg md:text-2xl drop-shadow"></i>
+                    <i class="fa-solid fa-heart text-red-500 text-lg md:text-2xl drop-shadow"></i>
+                </div>
+
+                <!-- Score -->
+                <div class="text-center">
+                    <div class="text-[10px] md:text-xs text-amber-200">目前分數</div>
+                    <div id="score-text" class="font-num text-lg md:text-2xl font-bold text-yellow-300 drop-shadow">0</div>
+                </div>
+
+                <!-- Combo -->
+                <div class="text-center bg-amber-900/60 px-2 py-0.5 rounded-lg border border-amber-600/50">
+                    <div class="text-[9px] text-amber-200">COMBO</div>
+                    <div id="combo-text" class="font-num text-base md:text-lg font-extrabold text-orange-400">x0</div>
+                </div>
+
+                <!-- Timer -->
+                <div class="text-center">
+                    <div class="text-[10px] md:text-xs text-amber-200">花費時間</div>
+                    <div id="timer-text" class="font-num text-base md:text-lg font-bold text-emerald-300">00:00</div>
+                </div>
+            </div>
+
+            <!-- Right: Controls -->
+            <div class="flex items-center space-x-2">
+                <button id="btn-sound" class="bg-amber-700 hover:bg-amber-600 active:translate-y-0.5 text-white p-1.5 md:p-2 rounded-xl border border-amber-500 shadow transition" title="切換音效">
+                    <i class="fa-solid fa-volume-high text-sm md:text-base"></i>
+                </button>
+                <button id="btn-skip" class="bg-red-600 hover:bg-red-500 active:translate-y-0.5 text-white px-2.5 py-1 rounded-xl border border-red-400 text-xs md:text-sm font-bold shadow transition flex items-center gap-1">
+                    <i class="fa-solid fa-forward"></i>
+                    <span>跳過</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- GAME ARENA GRID -->
+        <main class="grid grid-cols-1 sm:grid-cols-12 gap-2 md:gap-3 my-1 md:my-2 flex-1 min-h-0 items-stretch overflow-y-auto sm:overflow-visible">
+            
+            <!-- LEFT PANEL: Dynamic Math SVG Diagram -->
+            <section class="sm:col-span-5 wood-panel p-2 md:p-3 flex flex-col justify-between items-center relative overflow-hidden bg-amber-50/95 text-slate-800 border-4 border-amber-900 min-h-[220px] sm:min-h-0">
+                <!-- Question Prompt Banner -->
+                <div class="w-full bg-amber-200/90 border-b-2 border-amber-400 p-2 rounded-lg text-center shadow-inner shrink-0">
+                    <p id="question-prompt" class="font-cute text-sm md:text-base text-amber-950">
+                        請計算下列整數算式，打中正確答案！
+                    </p>
+                </div>
+
+                <!-- Dynamic SVG Diagram Container -->
+                <div class="w-full flex-1 flex items-center justify-center p-1 my-1 min-h-[140px] relative shrink-0 sm:shrink">
+                    <svg id="math-svg" class="w-full h-full max-h-[220px] md:max-h-[300px] drop-shadow-md" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+                        <!-- Rendered by JS -->
+                    </svg>
+                </div>
+
+                <!-- Hint / Status info -->
+                <div class="w-full bg-amber-100/90 rounded-md p-1.5 text-xs text-amber-900 flex justify-between items-center border border-amber-300 shrink-0">
+                    <span><i class="fa-solid fa-lightbulb text-yellow-600 mr-1"></i>小提示：先判斷運算順序與正負號，再開始計算！</span>
+                    <span id="accuracy-text" class="font-num font-bold text-emerald-700">正確率: 100%</span>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: Whack-a-Mole Grass Field (3 cols x 2 rows) -->
+            <section class="sm:col-span-7 bg-emerald-600/90 border-4 border-emerald-800 rounded-2xl p-2.5 md:p-4 flex flex-col justify-around relative shadow-2xl overflow-hidden min-h-[240px] sm:min-h-0">
+                <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#fff 10%, transparent 11%); background-size: 20px 20px;"></div>
+
+                <!-- 6 Mole Holes Grid -->
+                <div class="grid grid-cols-3 gap-2 md:gap-4 h-full items-center z-10">
+                    
+                    <!-- Mole Slot 0 -->
+                    <div class="hole-wrapper">
+                        <div class="mole-hole-bg w-full h-10 md:h-14 absolute bottom-1 z-0"></div>
+                        <div id="mole-0" class="mole-container relative w-20 md:w-28 h-24 md:h-32 z-10 flex flex-col items-center justify-end cursor-pointer" onclick="whackMole(0)">
+                            <div class="mole-body relative w-full h-full flex flex-col items-center justify-end">
+                                <div class="wood-sign mb-1 px-2 py-0.5 md:py-1 rounded-lg shadow-md flex items-center justify-center min-w-[60px] md:min-w-[80px]">
+                                    <span id="sign-0" class="font-num text-slate-900 font-extrabold text-sm md:text-lg">a:b</span>
+                                </div>
+                                <svg class="w-16 md:w-22 h-16 md:h-22" viewBox="0 0 100 100">
+                                    <ellipse cx="50" cy="60" rx="38" ry="35" fill="#8d5b4c"/>
+                                    <ellipse cx="50" cy="65" rx="26" ry="22" fill="#d7ccc8"/>
+                                    <circle cx="38" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="62" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="40" cy="46" r="2" fill="#fff"/>
+                                    <circle cx="64" cy="46" r="2" fill="#fff"/>
+                                    <ellipse cx="50" cy="56" rx="10" ry="7" fill="#ffab91"/>
+                                    <ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#d81b60"/>
+                                    <circle cx="30" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <circle cx="70" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <path d="M 22 40 Q 50 20 78 40 Z" fill="#f59e0b"/>
+                                    <rect x="18" y="38" width="64" height="6" rx="3" fill="#d97706"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mole Slot 1 -->
+                    <div class="hole-wrapper">
+                        <div class="mole-hole-bg w-full h-10 md:h-14 absolute bottom-1 z-0"></div>
+                        <div id="mole-1" class="mole-container relative w-20 md:w-28 h-24 md:h-32 z-10 flex flex-col items-center justify-end cursor-pointer" onclick="whackMole(1)">
+                            <div class="mole-body relative w-full h-full flex flex-col items-center justify-end">
+                                <div class="wood-sign mb-1 px-2 py-0.5 md:py-1 rounded-lg shadow-md flex items-center justify-center min-w-[60px] md:min-w-[80px]">
+                                    <span id="sign-1" class="font-num text-slate-900 font-extrabold text-sm md:text-lg">a:b</span>
+                                </div>
+                                <svg class="w-16 md:w-22 h-16 md:h-22" viewBox="0 0 100 100">
+                                    <ellipse cx="50" cy="60" rx="38" ry="35" fill="#8d5b4c"/>
+                                    <ellipse cx="50" cy="65" rx="26" ry="22" fill="#d7ccc8"/>
+                                    <circle cx="38" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="62" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="40" cy="46" r="2" fill="#fff"/>
+                                    <circle cx="64" cy="46" r="2" fill="#fff"/>
+                                    <ellipse cx="50" cy="56" rx="10" ry="7" fill="#ffab91"/>
+                                    <ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#d81b60"/>
+                                    <circle cx="30" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <circle cx="70" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <path d="M 22 40 Q 50 20 78 40 Z" fill="#ef4444"/>
+                                    <rect x="18" y="38" width="64" height="6" rx="3" fill="#b91c1c"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mole Slot 2 -->
+                    <div class="hole-wrapper">
+                        <div class="mole-hole-bg w-full h-10 md:h-14 absolute bottom-1 z-0"></div>
+                        <div id="mole-2" class="mole-container relative w-20 md:w-28 h-24 md:h-32 z-10 flex flex-col items-center justify-end cursor-pointer" onclick="whackMole(2)">
+                            <div class="mole-body relative w-full h-full flex flex-col items-center justify-end">
+                                <div class="wood-sign mb-1 px-2 py-0.5 md:py-1 rounded-lg shadow-md flex items-center justify-center min-w-[60px] md:min-w-[80px]">
+                                    <span id="sign-2" class="font-num text-slate-900 font-extrabold text-sm md:text-lg">a:b</span>
+                                </div>
+                                <svg class="w-16 md:w-22 h-16 md:h-22" viewBox="0 0 100 100">
+                                    <ellipse cx="50" cy="60" rx="38" ry="35" fill="#8d5b4c"/>
+                                    <ellipse cx="50" cy="65" rx="26" ry="22" fill="#d7ccc8"/>
+                                    <circle cx="38" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="62" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="40" cy="46" r="2" fill="#fff"/>
+                                    <circle cx="64" cy="46" r="2" fill="#fff"/>
+                                    <ellipse cx="50" cy="56" rx="10" ry="7" fill="#ffab91"/>
+                                    <ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#d81b60"/>
+                                    <circle cx="30" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <circle cx="70" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <path d="M 22 40 Q 50 20 78 40 Z" fill="#3b82f6"/>
+                                    <rect x="18" y="38" width="64" height="6" rx="3" fill="#1d4ed8"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mole Slot 3 -->
+                    <div class="hole-wrapper">
+                        <div class="mole-hole-bg w-full h-10 md:h-14 absolute bottom-1 z-0"></div>
+                        <div id="mole-3" class="mole-container relative w-20 md:w-28 h-24 md:h-32 z-10 flex flex-col items-center justify-end cursor-pointer" onclick="whackMole(3)">
+                            <div class="mole-body relative w-full h-full flex flex-col items-center justify-end">
+                                <div class="wood-sign mb-1 px-2 py-0.5 md:py-1 rounded-lg shadow-md flex items-center justify-center min-w-[60px] md:min-w-[80px]">
+                                    <span id="sign-3" class="font-num text-slate-900 font-extrabold text-sm md:text-lg">a:b</span>
+                                </div>
+                                <svg class="w-16 md:w-22 h-16 md:h-22" viewBox="0 0 100 100">
+                                    <ellipse cx="50" cy="60" rx="38" ry="35" fill="#8d5b4c"/>
+                                    <ellipse cx="50" cy="65" rx="26" ry="22" fill="#d7ccc8"/>
+                                    <circle cx="38" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="62" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="40" cy="46" r="2" fill="#fff"/>
+                                    <circle cx="64" cy="46" r="2" fill="#fff"/>
+                                    <ellipse cx="50" cy="56" rx="10" ry="7" fill="#ffab91"/>
+                                    <ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#d81b60"/>
+                                    <circle cx="30" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <circle cx="70" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <path d="M 22 40 Q 50 20 78 40 Z" fill="#10b981"/>
+                                    <rect x="18" y="38" width="64" height="6" rx="3" fill="#047857"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mole Slot 4 -->
+                    <div class="hole-wrapper">
+                        <div class="mole-hole-bg w-full h-10 md:h-14 absolute bottom-1 z-0"></div>
+                        <div id="mole-4" class="mole-container relative w-20 md:w-28 h-24 md:h-32 z-10 flex flex-col items-center justify-end cursor-pointer" onclick="whackMole(4)">
+                            <div class="mole-body relative w-full h-full flex flex-col items-center justify-end">
+                                <div class="wood-sign mb-1 px-2 py-0.5 md:py-1 rounded-lg shadow-md flex items-center justify-center min-w-[60px] md:min-w-[80px]">
+                                    <span id="sign-4" class="font-num text-slate-900 font-extrabold text-sm md:text-lg">a:b</span>
+                                </div>
+                                <svg class="w-16 md:w-22 h-16 md:h-22" viewBox="0 0 100 100">
+                                    <ellipse cx="50" cy="60" rx="38" ry="35" fill="#8d5b4c"/>
+                                    <ellipse cx="50" cy="65" rx="26" ry="22" fill="#d7ccc8"/>
+                                    <circle cx="38" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="62" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="40" cy="46" r="2" fill="#fff"/>
+                                    <circle cx="64" cy="46" r="2" fill="#fff"/>
+                                    <ellipse cx="50" cy="56" rx="10" ry="7" fill="#ffab91"/>
+                                    <ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#d81b60"/>
+                                    <circle cx="30" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <circle cx="70" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <path d="M 22 40 Q 50 20 78 40 Z" fill="#8b5cf6"/>
+                                    <rect x="18" y="38" width="64" height="6" rx="3" fill="#6d28d9"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mole Slot 5 -->
+                    <div class="hole-wrapper">
+                        <div class="mole-hole-bg w-full h-10 md:h-14 absolute bottom-1 z-0"></div>
+                        <div id="mole-5" class="mole-container relative w-20 md:w-28 h-24 md:h-32 z-10 flex flex-col items-center justify-end cursor-pointer" onclick="whackMole(5)">
+                            <div class="mole-body relative w-full h-full flex flex-col items-center justify-end">
+                                <div class="wood-sign mb-1 px-2 py-0.5 md:py-1 rounded-lg shadow-md flex items-center justify-center min-w-[60px] md:min-w-[80px]">
+                                    <span id="sign-5" class="font-num text-slate-900 font-extrabold text-sm md:text-lg">a:b</span>
+                                </div>
+                                <svg class="w-16 md:w-22 h-16 md:h-22" viewBox="0 0 100 100">
+                                    <ellipse cx="50" cy="60" rx="38" ry="35" fill="#8d5b4c"/>
+                                    <ellipse cx="50" cy="65" rx="26" ry="22" fill="#d7ccc8"/>
+                                    <circle cx="38" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="62" cy="48" r="5" fill="#1a0a00"/>
+                                    <circle cx="40" cy="46" r="2" fill="#fff"/>
+                                    <circle cx="64" cy="46" r="2" fill="#fff"/>
+                                    <ellipse cx="50" cy="56" rx="10" ry="7" fill="#ffab91"/>
+                                    <ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#d81b60"/>
+                                    <circle cx="30" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <circle cx="70" cy="54" r="5" fill="#ff8a80" opacity="0.6"/>
+                                    <path d="M 22 40 Q 50 20 78 40 Z" fill="#ec4899"/>
+                                    <rect x="18" y="38" width="64" height="6" rx="3" fill="#be185d"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL 1: GAME START -->
+    <div id="modal-start" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4">
+        <div class="wood-panel max-w-lg w-full p-6 text-white text-center shadow-2xl relative border-4 border-amber-900">
+            <div class="inline-block bg-yellow-500 text-amber-950 font-cute text-xl md:text-2xl px-6 py-2 rounded-full mb-4 shadow border-2 border-yellow-200">
+                🐹 國中數學打地鼠 🔨
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold mb-2 text-yellow-300 font-cute">整數運算九大關卡</h1>
+            <p class="text-sm md:text-base text-amber-100 mb-6">
+                從整數加減一路挑戰到含絕對值、括號的四則運算，打中正確答案的地鼠！
+            </p>
+
+            <div class="mb-6 text-left bg-amber-950/40 p-4 rounded-xl border border-amber-700/50 max-h-[52vh] overflow-y-auto custom-scroll">
+                <div class="text-xs md:text-sm font-bold text-amber-300 mb-2">請選擇練習關卡：</div>
+                <div class="grid grid-cols-1 gap-2">
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="add" checked class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">1. 整數加法</div><div class="text-xs text-amber-200">正負整數的加法運算</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="sub"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">2. 整數減法</div><div class="text-xs text-amber-200">正負整數的減法運算</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="addsub"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">3. 整數加減混合運算</div><div class="text-xs text-amber-200">連續加減與負號判讀</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="absaddsub"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">4. 含絕對值的整數加減混合</div><div class="text-xs text-amber-200">先算絕對值，再進行加減</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="mul"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">5. 整數乘法</div><div class="text-xs text-amber-200">正負號規則與乘法</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="div"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">6. 整數除法</div><div class="text-xs text-amber-200">可整除的正負整數除法</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="four"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">7. 整數的四則運算</div><div class="text-xs text-amber-200">依先乘除、後加減計算</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="paren"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">8. 含括號的整數四則運算</div><div class="text-xs text-amber-200">先括號，再乘除，最後加減</div></div>
+                </label>
+                <label class="flex items-center p-2.5 rounded-lg bg-amber-900/60 hover:bg-amber-800/80 cursor-pointer border border-amber-600 transition">
+                    <input type="radio" name="difficulty" value="absfour"  class="w-5 h-5 text-yellow-500 focus:ring-0">
+                    <div class="ml-3"><div class="font-bold text-yellow-300">9. 含絕對值的整數四則運算</div><div class="text-xs text-amber-200">結合絕對值與四則運算</div></div>
+                </label>
+                </div>
+            </div>
+
+            <button id="btn-start-game" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-cute text-xl py-3 rounded-2xl border-2 border-emerald-300 shadow-lg transform active:scale-95 transition">
+                🚀 開始挑戰（10 題）
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EXPLANATION MODAL -->
+    <div id="modal-explain" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 md:p-6 text-slate-800 shadow-2xl border-4 border-amber-600 relative flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b-2 border-amber-200 pb-3 mb-3">
+                <div id="explain-title" class="font-cute text-lg md:text-xl text-red-600 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-xmark text-2xl"></i>
+                    <span>答錯了！詳細解題教學</span>
+                </div>
+                <span id="explain-encouragement" class="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">別灰心，再接再厲！</span>
+            </div>
+
+            <div id="explain-content" class="custom-scroll overflow-y-auto pr-2 space-y-3 text-sm md:text-base flex-1">
+                <!-- Solution Steps -->
+            </div>
+
+            <button id="btn-next-question" class="mt-4 w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-base py-2.5 rounded-xl shadow border-2 border-amber-400 active:scale-95 transition">
+                下一題 ➔
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: GAME OVER -->
+    <div id="modal-gameover" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 hidden">
+        <div class="wood-panel max-w-md w-full p-6 text-white text-center shadow-2xl border-4 border-amber-900 relative">
+            <div class="text-4xl mb-2">🎉</div>
+            <h2 id="result-title" class="font-cute text-2xl md:text-3xl text-yellow-300 mb-2">挑戰完成！</h2>
+            <p id="result-subtitle" class="text-amber-100 text-sm mb-6">太棒了！你展現了優秀的比例線段推理能力！</p>
+
+            <div class="bg-amber-950/60 rounded-xl p-4 mb-6 border border-amber-700/60 space-y-3 font-num">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-amber-200">最終得分</span>
+                    <span id="res-score" class="text-2xl font-bold text-yellow-400">0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-amber-200">最高 Combo</span>
+                    <span id="res-combo" class="text-xl font-bold text-orange-400">0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-amber-200">正確率</span>
+                    <span id="res-accuracy" class="text-xl font-bold text-emerald-400">0%</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-amber-200">總耗時</span>
+                    <span id="res-time" class="text-lg font-bold text-sky-300">00:00</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="w-full bg-yellow-500 hover:bg-yellow-400 text-amber-950 font-cute text-xl py-3 rounded-2xl border-2 border-yellow-200 shadow-lg active:scale-95 transition">
+                🔄 再次挑戰
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playPop() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+            playWhack() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+            playCorrect() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.25);
+                });
+            }
+            playWrong() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [220, 207.65, 196].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.18);
+                });
+            }
+        }
+        const audio = new SoundFX();
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function triggerPetalShower(x, y) {
+            const colors = ['#f43f5e', '#ec4899', '#d97706', '#eab308', '#22c55e', '#3b82f6'];
+            for (let i = 0; i < 28; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.8) * 8,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: Math.random() * 0.02 + 0.015,
+                    rotation: Math.random() * Math.PI * 2,
+                    vRot: (Math.random() - 0.5) * 0.2
+                });
+            }
+        }
+
+        function updateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.25;
+                p.alpha -= p.decay;
+                p.rotation += p.vRot;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            requestAnimationFrame(updateParticles);
+        }
+        requestAnimationFrame(updateParticles);
+
+        function showFloatingText(text, x, y) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.textContent = text;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 850);
+        }
+
+        const mallet = document.getElementById('mallet');
+
+        // 槌仔揮擊動畫（僅在打擊瞬間出現，揮完即自動隱藏，不常駐遮擋選單）
+        function triggerMalletAnimation(targetEl, callback) {
+            const rect = targetEl.getBoundingClientRect();
+            mallet.style.left = `${rect.left + rect.width / 2 - 30}px`;
+            mallet.style.top = `${rect.top - 30}px`;
+            mallet.classList.remove('hidden');
+            
+            mallet.classList.remove('swing');
+            void mallet.offsetWidth;
+            mallet.classList.add('swing');
+
+            setTimeout(() => {
+                if (callback) callback();
+            }, 120);
+
+            setTimeout(() => {
+                mallet.classList.add('hidden');
+                mallet.classList.remove('swing');
+            }, 300);
+        }
+
+        function gcd(a, b) {
+            return b === 0 ? Math.abs(a) : gcd(b, a % b);
+        }
+
+        function simplifyRatio(n1, n2) {
+            const common = gcd(n1, n2);
+            return {
+                a: n1 / common,
+                b: n2 / common,
+                str: `${n1 / common}:${n2 / common}`
+            };
+        }
+
+        class MathEngine {
+            constructor(){ this.usedKeys=new Set(); }
+            resetHistory(){ this.usedKeys.clear(); }
+            r(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+            nz(min=-12,max=12){ let n=0; while(n===0)n=this.r(min,max); return n; }
+            fmt(n){ return n<0 ? `(${n})` : `${n}`; }
+            make(expr, answer, steps, traps=[]){
+                const correct=`${answer}`;
+                return {promptText:`計算：<span class="text-red-600 font-bold text-xl">$${expr}$</span>`, correctRatioStr:correct,
+                    choices:this.choices(answer, traps), svgData:{expression:expr}, solutionSteps:steps};
+            }
+            // 誘答選項優先放入「學生常見錯誤」的計算結果，而不是只用答案附近的亂數。
+            choices(ans, traps=[]){
+                const set=new Set([ans]);
+                traps.filter(Number.isFinite).forEach(v=>{ if(v!==ans) set.add(v); });
+                const ds=[-10,-6,-4,-3,-2,-1,1,2,3,4,6,10];
+                while(set.size<4){ let v=ans+ds[this.r(0,ds.length-1)]; if(v!==ans)set.add(v); }
+                return [...set].slice(0,4).sort(()=>Math.random()-.5).map(String);
+            }
+            generateProblem(type){
+                for(let k=0;k<100;k++){
+                    let p=this.build(type); const key=p.promptText;
+                    if(!this.usedKeys.has(key)){this.usedKeys.add(key);return p;}
+                }
+                this.usedKeys.clear(); return this.build(type);
+            }
+            build(type){
+                let a,b,c,d,q,ans,expr,steps, traps=[];
+                if(type==='add'){
+                    a=this.nz(); b=this.nz(); ans=a+b; expr=`${a}+${this.fmt(b)}`;
+                    steps=[`先判斷兩數的正負號。`,`同號相加取原符號；異號相加用絕對值較大的數決定符號。`,`$${expr}=${ans}$。`];
+                } else if(type==='sub'){
+                    a=this.nz(); b=this.nz(); ans=a-b; expr=`${a}-${this.fmt(b)}`;
+                    steps=[`減去一個數，等於加上它的相反數。`,`$${a}-${this.fmt(b)}=${a}+${this.fmt(-b)}$。`,`所以答案是 $${ans}$。`]; traps=[a+b, a+Math.abs(b), a-Math.abs(b), -Math.abs(ans)];
+                } else if(type==='addsub'){
+                    a=this.nz(); b=this.nz(); c=this.nz(); ans=a+b-c; expr=`${a}+${this.fmt(b)}-${this.fmt(c)}`;
+                    steps=[`先把減法改寫成加上相反數。`,`由左到右計算：$${a}+${this.fmt(b)}=${a+b}$。`,`再算 $${a+b}-${this.fmt(c)}=${ans}$。`];
+                } else if(type==='absaddsub'){
+                    // 絕對值內固定放負整數，避免出現 |3| 這種過易題型
+                    a=-this.r(2,20); b=-this.r(2,20); c=this.nz(-15,15);
+                    ans=Math.abs(a)-Math.abs(b)+c; expr=`|${a}|-|${b}|+${this.fmt(c)}`;
+                    steps=[`先處理絕對值：$|${a}|=${Math.abs(a)}$，$|${b}|=${Math.abs(b)}$。`,`原式變成 $${Math.abs(a)}-${Math.abs(b)}+${this.fmt(c)}$。`,`依序加減，答案是 $${ans}$。`]; traps=[a-b+c, Math.abs(a)+Math.abs(b)+c, Math.abs(a)-Math.abs(b)-c, Math.abs(ans)];
+                } else if(type==='mul'){
+                    a=this.nz(-12,12); b=this.nz(-12,12); ans=a*b; expr=`${this.fmt(a)}\\times${this.fmt(b)}`;
+                    steps=[`先判斷符號：同號得正、異號得負。`,`再將絕對值相乘：$${Math.abs(a)}\\times${Math.abs(b)}=${Math.abs(ans)}$。`,`所以答案是 $${ans}$。`]; traps=[Math.abs(ans), -Math.abs(ans), a+b, -(Math.abs(a)*Math.abs(b))];
+                } else if(type==='div'){
+                    b=this.nz(-10,10); q=this.nz(-10,10); a=b*q; ans=q; expr=`${this.fmt(a)}\\div${this.fmt(b)}`;
+                    steps=[`先判斷符號：同號得正、異號得負。`,`計算絕對值：$${Math.abs(a)}\\div${Math.abs(b)}=${Math.abs(q)}$。`,`所以答案是 $${ans}$。`]; traps=[Math.abs(ans), -Math.abs(ans), a/b, -(a/b)];
+                } else if(type==='four'){
+                    // 參考課本題型：乘除連算，或加減中夾乘除
+                    const mode=this.r(1,4);
+                    if(mode===1){ b=this.nz(-9,-2); c=this.r(2,12); q=this.nz(-6,-2); a=b*c*q; ans=(a/b)*q; expr=`${this.fmt(a)}\\div${this.fmt(b)}\\times${this.fmt(q)}`; steps=[`乘除同一層級，依照由左到右計算。`,`先算 $${this.fmt(a)}\\div${this.fmt(b)}=${a/b}$。`,`再算 $${a/b}\\times${this.fmt(q)}=${ans}$。`]; }
+                    else if(mode===2){ b=-this.r(2,9); q=this.r(2,6); a=Math.abs(b)*this.r(4,10); ans=(a/b)*q; expr=`${a}\\div${this.fmt(b)}\\times${q}`; steps=[`乘除同一層級，依照由左到右計算。`,`$${a}\\div${this.fmt(b)}=${a/b}$。`,`$${a/b}\\times${q}=${ans}$。`]; }
+                    else if(mode===3){ a=this.r(5,20); b=this.r(2,8); c=-this.r(2,9); ans=a+b*c; expr=`${a}+${b}\\times${this.fmt(c)}`; steps=[`先乘除、後加減。`,`先算 $${b}\\times${this.fmt(c)}=${b*c}$。`,`再算 $${a}+${this.fmt(b*c)}=${ans}$。`]; }
+                    else { a=this.r(2,9); b=this.r(5,15); c=this.r(2,8); q=-this.r(2,6); d=c*q; ans=a*b-d/q; expr=`${a}\\times${b}-${d}\\div${this.fmt(q)}`; steps=[`先分別完成乘法與除法。`,`$${a}\\times${b}=${a*b}$，$${d}\\div${this.fmt(q)}=${d/q}$。`,`最後相減：$${a*b}-${this.fmt(d/q)}=${ans}$。`]; }
+                    traps=[-ans, Math.abs(ans), ans>0?ans-12:ans+12, ans>0?ans+8:ans-8];
+                } else if(type==='paren'){
+                    // 參考課本：括號拆除、交換結合與大數消去
+                    if(Math.random()<0.5){
+                        a=this.r(120,500); b=this.r(120,500); expr=`${a}-(${b}+${a})`; ans=-b;
+                        steps=[`括號前是減號，去括號後括號內各項都要變號。`,`$${a}-(${b}+${a})=${a}-${b}-${a}$。`,`交換、結合後 $${a}-${a}-${b}=-${b}$。`];
+                    } else {
+                        const n=this.r(900,1900); const gap=this.r(1,9); a=-(n-gap); b=this.r(10,50); c=n; expr=`${this.fmt(a)}-(${b}-${c})`; ans=a-b+c;
+                        steps=[`括號前是減號，去括號時括號內符號改變。`,`$${this.fmt(a)}-(${b}-${c})=${a}-${b}+${c}$。`,`先結合容易計算的數：$${a}+${c}=${a+c}$。`,`所以答案是 $${a+c}-${b}=${ans}$。`];
+                    }
+                    traps=[-ans, Math.abs(a)-b-c, a+b-c, a-b-c];
+                } else {
+                    // 含絕對值的整數四則：加入「絕對值外仍有運算」的課本型態；負數因數一律加括號。
+                    const mode=this.r(1,4);
+                    if(mode===1){
+                        // 例：(-8)×6 + |(-5)×10 - 1|
+                        a=-this.r(2,9); b=this.r(2,8); c=-this.r(2,9); d=this.r(2,10); q=this.r(1,6);
+                        const inner=c*d-q; ans=a*b+Math.abs(inner);
+                        expr=`${this.fmt(a)}\times${b}+\left|${this.fmt(c)}\times${d}-${q}\right|`;
+                        traps=[a*b+inner, -(a*b)+Math.abs(inner), a*b-Math.abs(inner), Math.abs(a*b+inner)];
+                        steps=[`先算乘法：$${this.fmt(a)}\times${b}=${a*b}$，$${this.fmt(c)}\times${d}=${c*d}$。`,`再算絕對值內：$${c*d}-${q}=${inner}$，所以 $|${inner}|=${Math.abs(inner)}$。`,`最後：$${a*b}+${Math.abs(inner)}=${ans}$。`];
+                    } else if(mode===2){
+                        b=-this.r(2,9); c=this.r(2,5); d=this.r(1,8); const inner2=b*c-d;
+                        q=this.r(2,6); a=inner2*q; const inner=a/inner2; ans=Math.abs(inner);
+                        expr=`\left|${this.fmt(a)}\div[${this.fmt(b)}\times${c}-${d}]\right|`;
+                        traps=[inner, -inner, Math.abs(a)/(Math.abs(b)*c-d), Math.abs(a)/Math.abs(b)*c-d];
+                        steps=[`先算絕對值內的中括號：$${this.fmt(b)}\times${c}-${d}=${b*c}-${d}=${inner2}$。`,`再算絕對值內：$${this.fmt(a)}\div${this.fmt(inner2)}=${inner}$。`,`最後取絕對值：$|${inner}|=${ans}$。`];
+                    } else if(mode===3){
+                        a=-this.r(5,20); b=this.r(2,9); c=-this.r(2,9); const inner=a+b*c; ans=Math.abs(inner);
+                        expr=`\left|${a}+${b}\times${this.fmt(c)}\right|`;
+                        traps=[inner, Math.abs(a)+b*c, a+Math.abs(b*c), Math.abs(a)+Math.abs(b*c)];
+                        steps=[`絕對值內先乘除、後加減。`,`先算 $${b}\times${this.fmt(c)}=${b*c}$。`,`絕對值內為 $${a}+${this.fmt(b*c)}=${inner}$。`,`最後 $|${inner}|=${ans}$。`];
+                    } else {
+                        a=-this.r(8,20); b=this.r(2,7); c=this.r(2,6); const inner=a-b-c; ans=Math.abs(inner);
+                        expr=`\left|${a}-${b}-${c}\right|`;
+                        traps=[inner, Math.abs(a)-b-c, Math.abs(a-b)-c, Math.abs(a)-Math.abs(b-c)];
+                        steps=[`絕對值內有兩個減法，依序由左到右計算。`,`$${a}-${b}=${a-b}$。`,`$${a-b}-${c}=${inner}$，最後取絕對值：$|${inner}|=${ans}$。`];
+                    }
+                }
+                return this.make(expr,ans,steps,traps);
+            }
+        }
+        const mathEngine = new MathEngine();
+
+        function createSVGPath(parent, d, className, fill = 'none') {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('class', className);
+            path.setAttribute('fill', fill);
+            parent.appendChild(path);
+            return path;
+        }
+
+        function drawPointLabel(parent, x, y, textStr) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x);
+            text.setAttribute('y', y);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('font-family', 'Chakra Petch, sans-serif');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('font-style', 'italic');
+            text.setAttribute('font-size', '18');
+            text.setAttribute('fill', '#0f172a');
+            text.textContent = textStr;
+            parent.appendChild(text);
+        }
+
+        function drawLineNameLabel(parent, x, y, textStr) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x);
+            text.setAttribute('y', y);
+            text.setAttribute('font-family', 'Chakra Petch, sans-serif');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('font-size', '18');
+            text.setAttribute('fill', '#0f172a');
+            text.textContent = textStr;
+            parent.appendChild(text);
+        }
+
+        function drawParallelArrows(parent, p1, p2, p3, p4) {
+            const mid1 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+            const mid2 = { x: (p3.x + p4.x) / 2, y: (p3.y + p4.y) / 2 };
+            
+            [mid1, mid2].forEach(pt => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pt.x);
+                text.setAttribute('y', pt.y + 5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#d97706');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('font-size', '15');
+                text.textContent = '>>';
+                parent.appendChild(text);
+            });
+        }
+
+        function drawBracketLabel(parent, pA, pB, offsetDistance, textVal, isTarget = false) {
+            if (textVal === undefined || textVal === '') return;
+
+            const dx = pB.x - pA.x;
+            const dy = pB.y - pA.y;
+            const len = Math.hypot(dx, dy);
+            if (len === 0) return;
+
+            let nx = -dy / len;
+            let ny = dx / len;
+
+            const midSegment = { x: (pA.x + pB.x) / 2, y: (pA.y + pB.y) / 2 };
+
+            if (midSegment.x < 200) {
+                if (nx > 0) { nx = -nx; ny = -ny; }
+            } else {
+                if (nx < 0) { nx = -nx; ny = -ny; }
+            }
+
+            const dist = Math.abs(offsetDistance);
+            const cA = { x: pA.x + nx * dist, y: pA.y + ny * dist };
+            const cB = { x: pB.x + nx * dist, y: pB.y + ny * dist };
+            const mid = { x: (cA.x + cB.x) / 2, y: (cA.y + cB.y) / 2 };
+
+            const arcPath = `M ${pA.x + nx*5} ${pA.y + ny*5} Q ${mid.x + nx*10} ${mid.y + ny*10} ${pB.x + nx*5} ${pB.y + ny*5}`;
+            createSVGPath(parent, arcPath, 'geo-arc');
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', mid.x + nx*8 - 18);
+            rect.setAttribute('y', mid.y + ny*8 - 13);
+            rect.setAttribute('width', 36);
+            rect.setAttribute('height', 26);
+            rect.setAttribute('rx', 6);
+            rect.setAttribute('fill', isTarget ? '#fee2e2' : '#ffffff');
+            rect.setAttribute('stroke', isTarget ? '#ef4444' : '#cbd5e1');
+            rect.setAttribute('stroke-width', '2');
+            parent.appendChild(rect);
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', mid.x + nx*8);
+            text.setAttribute('y', mid.y + ny*8 + 5);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('class', isTarget ? 'geo-target' : 'geo-label');
+            text.textContent = textVal;
+            parent.appendChild(text);
+        }
+
+        function drawStraightLabel(parent, pA, pB, offset, textVal, isTarget = false) {
+            const mid = { x: (pA.x + pB.x) / 2, y: (pA.y + pB.y) / 2 + offset };
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', mid.x - 18);
+            rect.setAttribute('y', mid.y - 12);
+            rect.setAttribute('width', 36);
+            rect.setAttribute('height', 24);
+            rect.setAttribute('rx', 6);
+            rect.setAttribute('fill', isTarget ? '#fee2e2' : '#ffffff');
+            rect.setAttribute('stroke', isTarget ? '#ef4444' : '#cbd5e1');
+            rect.setAttribute('stroke-width', '1.5');
+            parent.appendChild(rect);
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', mid.x);
+            text.setAttribute('y', mid.y + 5);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('class', isTarget ? 'geo-target' : 'geo-label');
+            text.textContent = textVal;
+            parent.appendChild(text);
+        }
+
+        function renderSVGDiagram(svgData) {
+            const svg = document.getElementById('math-svg');
+            svg.innerHTML = '';
+
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            if (svgData.shape.startsWith('triangle')) {
+                let pA, pB, pC, pD, pE;
+
+                if (svgData.orientation === 'down') {
+                    pA = { x: 200, y: 250 };
+                    pB = { x: 85, y: 50 };
+                    pC = { x: 315, y: 50 };
+                    pD = { x: 200 + (pB.x - 200) * 0.55, y: 250 + (pB.y - 250) * 0.55 };
+                    pE = { x: 200 + (pC.x - 200) * 0.55, y: 250 + (pC.y - 250) * 0.55 };
+                } else {
+                    pA = { x: 200, y: 40 };
+                    pB = { x: 85, y: 245 };
+                    pC = { x: 315, y: 245 };
+                    pD = { x: 200 + (pB.x - 200) * 0.52, y: 40 + (pB.y - 40) * 0.52 };
+                    pE = { x: 200 + (pC.x - 200) * 0.52, y: 40 + (pC.y - 40) * 0.52 };
+                }
+
+                createSVGPath(g, `M ${pA.x} ${pA.y} L ${pB.x} ${pB.y} L ${pC.x} ${pC.y} Z`, 'geo-line', '#fef3c7');
+                createSVGPath(g, `M ${pD.x} ${pD.y} L ${pE.x} ${pE.y}`, 'geo-parallel', 'none');
+
+                drawParallelArrows(g, pD, pE, pB, pC);
+
+                if (svgData.showPoints) {
+                    drawPointLabel(g, pA.x, pA.y - 12, 'A');
+                    drawPointLabel(g, pB.x - 14, pB.y + 12, 'B');
+                    drawPointLabel(g, pC.x + 14, pC.y + 12, 'C');
+                    drawPointLabel(g, pD.x - 14, pD.y + 4, 'D');
+                    drawPointLabel(g, pE.x + 14, pE.y + 4, 'E');
+                }
+
+                const gLabels = svgData.givenLabels || {};
+                const tLabels = svgData.targetLabels || {};
+
+                if (tLabels.leftTop) drawBracketLabel(g, pA, pD, 30, tLabels.leftTop, true);
+                else if (gLabels.leftTop) drawBracketLabel(g, pA, pD, 30, gLabels.leftTop, false);
+
+                if (tLabels.leftBottom) drawBracketLabel(g, pD, pB, 30, tLabels.leftBottom, true);
+                else if (gLabels.leftBottom) drawBracketLabel(g, pD, pB, 30, gLabels.leftBottom, false);
+
+                if (tLabels.leftTotal) drawBracketLabel(g, pA, pB, 58, tLabels.leftTotal, true);
+                else if (gLabels.leftTotal) drawBracketLabel(g, pA, pB, 58, gLabels.leftTotal, false);
+
+                if (tLabels.rightTop) drawBracketLabel(g, pA, pE, 30, tLabels.rightTop, true);
+                else if (gLabels.rightTop) drawBracketLabel(g, pA, pE, 30, gLabels.rightTop, false);
+
+                if (tLabels.rightBottom) drawBracketLabel(g, pE, pC, 30, tLabels.rightBottom, true);
+                else if (gLabels.rightBottom) drawBracketLabel(g, pE, pC, 30, gLabels.rightBottom, false);
+
+                if (tLabels.rightTotal) drawBracketLabel(g, pA, pC, 58, tLabels.rightTotal, true);
+                else if (gLabels.rightTotal) drawBracketLabel(g, pA, pC, 58, gLabels.rightTotal, false);
+
+                if (tLabels.parallelTop) drawStraightLabel(g, pD, pE, -20, tLabels.parallelTop, true);
+                else if (gLabels.parallelTop) drawStraightLabel(g, pD, pE, -20, gLabels.parallelTop, false);
+
+                if (tLabels.parallelBottom) drawStraightLabel(g, pB, pC, 22, tLabels.parallelBottom, true);
+                else if (gLabels.parallelBottom) drawStraightLabel(g, pB, pC, 22, gLabels.parallelBottom, false);
+            }
+
+            else if (svgData.shape.startsWith('parallel_3lines')) {
+                const y1 = 55, y2 = 140, y3 = 225;
+                
+                createSVGPath(g, `M 40 ${y1} L 360 ${y1}`, 'geo-parallel');
+                createSVGPath(g, `M 40 ${y2} L 360 ${y2}`, 'geo-parallel');
+                createSVGPath(g, `M 40 ${y3} L 360 ${y3}`, 'geo-parallel');
+
+                if (svgData.showLineNames) {
+                    drawLineNameLabel(g, 372, y1 + 5, 'L₁');
+                    drawLineNameLabel(g, 372, y2 + 5, 'L₂');
+                    drawLineNameLabel(g, 372, y3 + 5, 'L₃');
+                }
+
+                const pL1 = { x: 105, y: y1 }, pL2 = { x: 95, y: y2 }, pL3 = { x: 85, y: y3 };
+                const pR1 = { x: 295, y: y1 }, pR2 = { x: 305, y: y2 }, pR3 = { x: 315, y: y3 };
+
+                createSVGPath(g, `M 115 35 L 80 245`, 'geo-line');
+                createSVGPath(g, `M 285 35 L 320 245`, 'geo-line');
+
+                const gLabels = svgData.givenLabels || {};
+                const tLabels = svgData.targetLabels || {};
+
+                if (gLabels.leftTop) drawBracketLabel(g, pL1, pL2, 30, gLabels.leftTop, false);
+                if (gLabels.leftBottom) drawBracketLabel(g, pL2, pL3, 30, gLabels.leftBottom, false);
+
+                if (gLabels.rightTop) drawBracketLabel(g, pR1, pR2, 30, gLabels.rightTop, false);
+                else if (tLabels.rightTop) drawBracketLabel(g, pR1, pR2, 30, tLabels.rightTop, true);
+
+                if (gLabels.rightBottom) drawBracketLabel(g, pR2, pR3, 30, gLabels.rightBottom, false);
+                else if (tLabels.rightBottom) drawBracketLabel(g, pR2, pR3, 30, tLabels.rightBottom, true);
+            }
+
+            svg.appendChild(g);
+        }
+
+        class WhackAMoleGame {
+            constructor() {
+                this.difficulty = 'add';
+                this.currentQuestionIdx = 0;
+                this.totalQuestions = 10;
+                this.score = 0;
+                this.lives = 3;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.correctCount = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+                this.activeMoles = [];
+                this.currentProblem = null;
+                this.isAnsweringAllowed = false;
+            }
+
+            start(difficulty) {
+                this.difficulty = difficulty;
+                this.currentQuestionIdx = 0;
+                this.score = 0;
+                this.lives = 3;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.correctCount = 0;
+                this.startTime = Date.now();
+
+                // 每次開局重置出題紀錄，防止題型重複
+                mathEngine.resetHistory();
+
+                document.getElementById('q-curr').textContent = '1';
+                document.getElementById('q-total').textContent = '10';
+                document.getElementById('score-text').textContent = '0';
+                document.getElementById('combo-text').textContent = 'x0';
+                document.getElementById('accuracy-text').textContent = '正確率: 100%';
+                
+                const diffNames = {add:'整數加法',sub:'整數減法',addsub:'加減混合',absaddsub:'絕對值加減',mul:'整數乘法',div:'整數除法',four:'整數四則',paren:'括號四則',absfour:'絕對值四則'};
+                document.getElementById('diff-badge').textContent = diffNames[difficulty];
+
+                this.renderHearts();
+                this.startTimer();
+                this.loadNextQuestion();
+            }
+
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    const elapsedSec = Math.floor((Date.now() - this.startTime) / 1000);
+                    const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+                    const secs = String(elapsedSec % 60).padStart(2, '0');
+                    document.getElementById('timer-text').textContent = `${mins}:${secs}`;
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+            }
+
+            renderHearts() {
+                const container = document.getElementById('hearts-container');
+                container.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const heart = document.createElement('i');
+                    if (i < this.lives) {
+                        heart.className = 'fa-solid fa-heart text-red-500 text-lg md:text-2xl drop-shadow';
+                    } else {
+                        heart.className = 'fa-regular fa-heart text-slate-400 text-lg md:text-2xl opacity-60';
+                    }
+                    container.appendChild(heart);
+                }
+            }
+
+            loadNextQuestion() {
+                if (this.currentQuestionIdx >= this.totalQuestions || this.lives <= 0) {
+                    this.endGame();
+                    return;
+                }
+
+                this.currentQuestionIdx++;
+                document.getElementById('q-curr').textContent = this.currentQuestionIdx;
+
+                const acc = this.currentQuestionIdx > 1 
+                    ? Math.round((this.correctCount / (this.currentQuestionIdx - 1)) * 100) 
+                    : 100;
+                document.getElementById('accuracy-text').textContent = `正確率: ${acc}%`;
+
+                this.hideAllMoles();
+
+                this.currentProblem = mathEngine.generateProblem(this.difficulty);
+                document.getElementById('question-prompt').innerHTML = this.currentProblem.promptText;
+
+                const svg = document.getElementById('math-svg');
+                svg.innerHTML = `<foreignObject x="10" y="55" width="380" height="190"><div xmlns="http://www.w3.org/1999/xhtml" style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:34px;font-weight:900;color:#7c2d12;background:#fff7ed;border:4px solid #f59e0b;border-radius:20px;padding:18px;">\\(${this.currentProblem.svgData.expression}\\)</div></foreignObject>`;
+
+                if (window.MathJax) {
+                    MathJax.typesetPromise();
+                }
+
+                setTimeout(() => {
+                    this.popMoles(this.currentProblem.choices);
+                }, 300);
+            }
+
+            hideAllMoles() {
+                this.isAnsweringAllowed = false;
+                for (let i = 0; i < 6; i++) {
+                    const mole = document.getElementById(`mole-${i}`);
+                    mole.classList.remove('up', 'hit', 'shake');
+                }
+            }
+
+            popMoles(choices) {
+                const holeIndices = [0, 1, 2, 3, 4, 5];
+                for (let i = holeIndices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [holeIndices[i], holeIndices[j]] = [holeIndices[j], holeIndices[i]];
+                }
+                
+                this.activeMoles = holeIndices.slice(0, 4);
+
+                this.activeMoles.forEach((holeIdx, choiceIdx) => {
+                    const sign = document.getElementById(`sign-${holeIdx}`);
+                    sign.textContent = choices[choiceIdx];
+
+                    const mole = document.getElementById(`mole-${holeIdx}`);
+                    mole.dataset.choice = choices[choiceIdx];
+                    
+                    audio.playPop();
+                    mole.classList.add('up');
+                });
+
+                this.isAnsweringAllowed = true;
+            }
+
+            handleWhack(holeIdx) {
+                if (!this.isAnsweringAllowed) return;
+                
+                const mole = document.getElementById(`mole-${holeIdx}`);
+                if (!mole.classList.contains('up')) return;
+
+                this.isAnsweringAllowed = false;
+                const selectedChoice = mole.dataset.choice;
+                const isCorrect = selectedChoice === this.currentProblem.correctRatioStr;
+
+                triggerMalletAnimation(mole, () => {
+                    if (isCorrect) {
+                        this.onCorrectAnswer(holeIdx, mole);
+                    } else {
+                        this.onWrongAnswer(mole);
+                    }
+                });
+            }
+
+            onCorrectAnswer(holeIdx, moleEl) {
+                audio.playWhack();
+                setTimeout(() => audio.playCorrect(), 100);
+
+                moleEl.classList.add('hit');
+                
+                this.combo++;
+                if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+                
+                // 各題型依認知負荷給不同基本分；越後面的混合運算分數越高。
+                const scoreByType = {add:80, sub:100, addsub:120, absaddsub:150, mul:100, div:120, four:180, paren:220, absfour:260};
+                const baseScore = scoreByType[this.difficulty] || 100;
+                const comboBonus = (this.combo - 1) * Math.round(baseScore * 0.15);
+                this.score += (baseScore + comboBonus);
+                this.correctCount++;
+
+                document.getElementById('score-text').textContent = this.score;
+                document.getElementById('combo-text').textContent = `x${this.combo}`;
+
+                const rect = moleEl.getBoundingClientRect();
+                triggerPetalShower(rect.left + rect.width / 2, rect.top);
+                showFloatingText(['太棒了！', '算得真準！', '讚喔！', '答對了！'][Math.floor(Math.random()*4)], rect.left, rect.top);
+
+                setTimeout(() => {
+                    this.loadNextQuestion();
+                }, 1100);
+            }
+
+            onWrongAnswer(moleEl) {
+                audio.playWrong();
+                moleEl.classList.add('shake');
+
+                this.lives--;
+                this.combo = 0;
+                document.getElementById('combo-text').textContent = 'x0';
+                this.renderHearts();
+
+                const rect = moleEl.getBoundingClientRect();
+                showFloatingText('答錯囉！', rect.left, rect.top);
+
+                setTimeout(() => {
+                    this.showExplanationModal();
+                }, 800);
+            }
+
+            skipQuestion() {
+                if (!this.isAnsweringAllowed) return;
+                this.isAnsweringAllowed = false;
+                this.combo = 0;
+                document.getElementById('combo-text').textContent = 'x0';
+                this.showExplanationModal(true);
+            }
+
+            showExplanationModal(isSkipped = false) {
+                const modal = document.getElementById('modal-explain');
+                const title = document.getElementById('explain-title');
+                const encouragement = document.getElementById('explain-encouragement');
+                const content = document.getElementById('explain-content');
+
+                if (isSkipped) {
+                    title.innerHTML = `<i class="fa-solid fa-forward text-amber-600 text-2xl"></i><span>已跳過本題－解題觀念</span>`;
+                    encouragement.textContent = '觀摩一下解題步驟吧！';
+                } else {
+                    title.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-600 text-2xl"></i><span>答錯了！詳細解題教學</span>`;
+                    encouragement.textContent = '別灰心，看完說明再接再厲！';
+                }
+
+                let stepsHTML = `<div class="bg-amber-50 p-3 rounded-lg border border-amber-200 mb-3 font-bold text-amber-950">`;
+                stepsHTML += `正確答案為：<span class="text-red-600 font-num text-xl font-black">${this.currentProblem.correctRatioStr}</span></div>`;
+                
+                stepsHTML += `<ol class="space-y-2.5">`;
+                this.currentProblem.solutionSteps.forEach((step, idx) => {
+                    stepsHTML += `
+                        <li class="flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                            <span class="bg-amber-600 text-white font-num font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 text-xs">${idx + 1}</span>
+                            <span class="text-slate-700 leading-relaxed">${step}</span>
+                        </li>
+                    `;
+                });
+                stepsHTML += `</ol>`;
+
+                content.innerHTML = stepsHTML;
+                modal.classList.remove('hidden');
+
+                if (window.MathJax) {
+                    MathJax.typesetPromise();
+                }
+            }
+
+            endGame() {
+                this.stopTimer();
+                this.hideAllMoles();
+
+                const modal = document.getElementById('modal-gameover');
+                document.getElementById('res-score').textContent = this.score;
+                document.getElementById('res-combo').textContent = `x${this.maxCombo}`;
+
+                const acc = Math.round((this.correctCount / Math.max(1, this.currentQuestionIdx)) * 100);
+                document.getElementById('res-accuracy').textContent = `${acc}%`;
+
+                const elapsedSec = Math.floor((Date.now() - this.startTime) / 1000);
+                const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+                const secs = String(elapsedSec % 60).padStart(2, '0');
+                document.getElementById('res-time').textContent = `${mins}:${secs}`;
+
+                const title = document.getElementById('result-title');
+                const subtitle = document.getElementById('result-subtitle');
+
+                if (this.score >= 800) {
+                    title.textContent = '🏆 整數運算大師！';
+                    subtitle.textContent = '太厲害了！你已經熟練掌握這一關的整數運算！';
+                } else if (this.score >= 500) {
+                    title.textContent = '🎉 表現優異！';
+                    subtitle.textContent = '做得好！你的整數運算規則掌握得相當熟悉！';
+                } else {
+                    title.textContent = '💪 繼續努力！';
+                    subtitle.textContent = '多加練習觀念，下次一定能拿高分！';
+                }
+
+                modal.classList.remove('hidden');
+            }
+        }
+
+        const game = new WhackAMoleGame();
+
+        window.whackMole = function(idx) {
+            audio.init();
+            game.handleWhack(idx);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btn-start-game').addEventListener('click', () => {
+                audio.init();
+                const diffRadios = document.getElementsByName('difficulty');
+                let selectedDiff = 'add';
+                for (const radio of diffRadios) {
+                    if (radio.checked) {
+                        selectedDiff = radio.value;
+                        break;
+                    }
+                }
+                document.getElementById('modal-start').classList.add('hidden');
+                game.start(selectedDiff);
+            });
+
+            document.getElementById('btn-restart').addEventListener('click', () => {
+                document.getElementById('modal-gameover').classList.add('hidden');
+                document.getElementById('modal-start').classList.remove('hidden');
+            });
+
+            document.getElementById('btn-next-question').addEventListener('click', () => {
+                document.getElementById('modal-explain').classList.add('hidden');
+                game.loadNextQuestion();
+            });
+
+            document.getElementById('btn-skip').addEventListener('click', () => {
+                game.skipQuestion();
+            });
+
+            document.getElementById('btn-sound').addEventListener('click', () => {
+                audio.muted = !audio.muted;
+                const btn = document.getElementById('btn-sound');
+                btn.innerHTML = audio.muted 
+                    ? '<i class="fa-solid fa-volume-xmark text-sm md:text-base text-red-300"></i>'
+                    : '<i class="fa-solid fa-volume-high text-sm md:text-base"></i>';
+            });
+        });
+    </script>
+</body>
+</html>
